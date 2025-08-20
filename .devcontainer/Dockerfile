@@ -1,25 +1,24 @@
-FROM mcr.microsoft.com/devcontainers/universal:2-linux
+FROM mcr.microsoft.com/devcontainers/base:ubuntu
 # Install the xz-utils package
 RUN apt-get update
+# .devcontainer/Dockerfile
 
+USER root
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Base tools + headers (linux/mman.h lives in linux-libc-dev)
 RUN apt-get update && apt-get install -y \
-    curl \
-    gnupg \
-    xz-utils \
-    ca-certificates \
-    software-properties-common
+    curl ca-certificates gnupg \
+    git build-essential python3 python3-pip pkg-config \
+    linux-libc-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-# installing node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g npm@latest
+# Install Node LTS from NodeSource (prebuilt, avoids compiling OpenSSL)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+  && apt-get install -y nodejs \
+  && rm -rf /var/lib/apt/lists/*
 
-# installing Go
-ENV GO_VERSION=1.22.2
-RUN curl -LO https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz && \
-    rm -rf /usr/local/go && \
-    tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz && \
-    rm go${GO_VERSION}.linux-amd64.tar.gz
+# Optional sanity check during build (helps surface failures in the creation log)
+RUN node -v && npm -v && g++ --version
 
-# adding Go to path
-ENV PATH=$PATH:/usr/local/go/bin
+USER vscode
